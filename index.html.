@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lingova</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f7f2; margin: 0; padding: 0; color: #222; }
+  header { background: #2e8b57; color: white; text-align: center; padding: 18px; }
+  header h1 { margin: 0; font-size: 28px; }
+  header p { margin: 4px 0 0; font-size: 14px; }
+  main { max-width: 480px; margin: 0 auto; padding: 16px; }
+  .carte { background: white; border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  button { background: #2e8b57; color: white; border: none; border-radius: 10px; padding: 12px 16px; font-size: 16px; margin: 6px 0; width: 100%; cursor: pointer; }
+  button.choix { background: #eef3ea; color: #222; border: 2px solid #cfdcc7; text-align: left; }
+  button.bon { background: #c8f0cf; border-color: #2e8b57; }
+  button.mauvais { background: #f8d0d0; border-color: #c0392b; }
+  .barre { background: #dde6d8; border-radius: 10px; height: 12px; margin-bottom: 14px; }
+  .barre div { background: #2e8b57; height: 12px; border-radius: 10px; width: 0%; transition: width 0.3s; }
+  .points { text-align: right; font-weight: bold; color: #2e8b57; }
+  .cache { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lingova</h1>
+  <p>Apprendre le lingala gratuitement</p>
+</header>
+<main>
+  <div id="accueil" class="carte">
+    <h2>Leçon 1 : Les salutations</h2>
+    <p>Mbote, malamu, matondi... Apprends les mots de base en 5 minutes.</p>
+    <button onclick="commencer()">Commencer</button>
+    <p id="serie"></p>
+  </div>
+  <div id="quiz" class="carte cache">
+    <div class="barre"><div id="progres"></div></div>
+    <div class="points" id="points">Points : 0</div>
+    <h3 id="question"></h3>
+    <div id="reponses"></div>
+    <button id="suivant" class="cache" onclick="suivante()">Suivant</button>
+  </div>
+  <div id="fin" class="carte cache">
+    <h2>Bravo !</h2>
+    <p id="resultat"></p>
+    <button onclick="commencer()">Recommencer</button>
+  </div>
+</main>
+<script>
+var questions = [
+  { q: "Que veut dire Mbote ?", r: ["Merci", "Bonjour", "Au revoir", "Bien"], bonne: 1 },
+  { q: "Que veut dire Matondi ?", r: ["Merci", "Bonjour", "À bientôt", "Pardon"], bonne: 0 },
+  { q: "Comment dit-on : je vais bien ?", r: ["Mbote", "Nazali malamu", "Tokomonana", "Matondi"], bonne: 1 },
+  { q: "Que veut dire Tokomonana ?", r: ["Bonjour", "Merci", "À bientôt", "Bien"], bonne: 2 },
+  { q: "Que veut dire Malamu ?", r: ["Mauvais", "Bien", "Beaucoup", "Demain"], bonne: 1 }
+];
+var index = 0;
+var score = 0;
+
+function commencer() {
+  index = 0;
+  score = 0;
+  document.getElementById('accueil').classList.add('cache');
+  document.getElementById('fin').classList.add('cache');
+  document.getElementById('quiz').classList.remove('cache');
+  afficher();
+}
+
+function afficher() {
+  var q = questions[index];
+  document.getElementById('question').textContent = q.q;
+  document.getElementById('points').textContent = 'Points : ' + score;
+  document.getElementById('progres').style.width = (index / questions.length * 100) + '%';
+  document.getElementById('suivant').classList.add('cache');
+  var zone = document.getElementById('reponses');
+  zone.innerHTML = '';
+  q.r.forEach(function(texte, i) {
+    var b = document.createElement('button');
+    b.className = 'choix';
+    b.textContent = texte;
+    b.onclick = function() { repondre(i, b); };
+    zone.appendChild(b);
+  });
+}
+
+function repondre(i, bouton) {
+  var q = questions[index];
+  var boutons = document.querySelectorAll('#reponses button');
+  boutons.forEach(function(b) { b.disabled = true; });
+  if (i === q.bonne) {
+    bouton.classList.add('bon');
+    score = score + 10;
+  } else {
+    bouton.classList.add('mauvais');
+    boutons[q.bonne].classList.add('bon');
+  }
+  document.getElementById('points').textContent = 'Points : ' + score;
+  document.getElementById('suivant').classList.remove('cache');
+}
+
+function suivante() {
+  index = index + 1;
+  if (index < questions.length) {
+    afficher();
+  } else {
+    terminer();
+  }
+}
+
+function terminer() {
+  document.getElementById('quiz').classList.add('cache');
+  document.getElementById('fin').classList.remove('cache');
+  document.getElementById('resultat').textContent = 'Tu as ' + score + ' points sur ' + (questions.length * 10) + '.';
+  var aujourdhui = new Date().toDateString();
+  var dernier = localStorage.getItem('dernierJour');
+  var serie = parseInt(localStorage.getItem('serie') || '0');
+  if (dernier !== aujourdhui) {
+    var hier = new Date(Date.now() - 86400000).toDateString();
+    serie = (dernier === hier) ? serie + 1 : 1;
+    localStorage.setItem('serie', serie);
+    localStorage.setItem('dernierJour', aujourdhui);
+  }
+  document.getElementById('serie').textContent = 'Série : ' + serie + ' jour(s)';
+}
+
+var serieSauvee = localStorage.getItem('serie');
+if (serieSauvee) {
+  document.getElementById('serie').textContent = 'Série : ' + serieSauvee + ' jour(s)';
+}
+</script>
+</body>
+</html>
